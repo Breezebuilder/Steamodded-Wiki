@@ -14,7 +14,7 @@ Steamodded provides utility functions that extend or replace vanilla functionali
     - Recursively stringifies an input table into pseudo-valid Lua code, leaving non-serializable values and tables above a depth of 5 into their default string representations.
 
 ## Number formatting
-- `round_number(num_precision) -> number`
+- `round_number(num, precision) -> number`
     - Rounds the input number to a given amount of decimal places.
 - `format_ui_value(value) -> string`
     - Stringifies the input if it is not a number. Otherwise return the number as it should be displayed in the UI (e.g. scientific notation).
@@ -65,6 +65,7 @@ These functions facilitate specific tasks that many mods may use but may be hard
 - `SMODS.create_card(t) -> Card`
     - This function replaces `create_card`. It provides a cleaner interface to the same functionality. The argument to this function should always be a table. The following fields are supported:
     - `set` - The card type to be generated, e.g. `'Joker'`, `'Tarot'`, `'Spectral'`
+        - `'Playing Card'` can be used for a random pick between `'Base'` and `'Enhanced'`.
     - `area` - The card area this will be emplaced into, e.g. `G.jokers`, `G.consumeables`. Default values are determined based on `set`.
     - `legendary` - Set this to `true` to generate a card of Legendary rarity.
     - `rarity` - If this is specified, skip rarity polling and use this instead of a chance roll between 0 and 1.
@@ -76,6 +77,10 @@ These functions facilitate specific tasks that many mods may use but may be hard
     - `no_edition` - If this is `true`, the generated card is guaranteed to have no randomly generated edition.
     - `edition`, `enhancement`, `seal` - Applies the specified modifier to the card.
     - `stickers` - This should be an array of sticker keys. Applies all specified stickers to the card.
+    - `front` - Front of the playing card, takes the playing card's key (e.g. `H_A`). Ignores `rank` and `suit`.
+    - `rank` - Rank of the playing card. Can be the `key` or the `card_key` (e.g. `'Ace'` or `'A'`).
+    - `suit` - Suit of the playing card. Can be the `key` or the `card_key` (e.g. `'Hearts'` or `'H'`).
+    - `enhanced_poll` - Chance to pick `'Base'` over `'Enhanced'` with set `'Playing Card'`. Default: 0.6
 - `SMODS.debuff_card(card, debuff, source)`
     - Allows manually setting and removing debuffs from cards.
     - `source` should be a unique identifier string. You must use the same source to remove a previously set debuff.
@@ -94,6 +99,27 @@ These functions facilitate specific tasks that many mods may use but may be hard
     - Given an index from the Stake pool, return the corresponding key, or `'error'` if it doesn't exist.
 - `time(func, ...) -> number`
     - Calls an input function with any given additional arguments: `func(...)` and returns the time the function took to execute in milliseconds. The return value from `func` is lost.
+- `SMODS.destroy_cards(cards)`
+	- Destroys any type of cards given to the function appropriately, with respect to further calculations if called during the scoring loop.
+	- `cards` - Can be an individual `Card` object, or a table of `Card` objects.
+- `SMODS.add_voucher_to_shop(key)`/`SMODS.add_booster_to_shop(key)`
+	- Adds a `Voucher` or a `Booster` to the current shop.
+	- `key` - the key of the object to be added. If no key is provided, the next seeded object will be used
+- `SMODS.change_voucher_limit(mod)`/`SMODS.change_booster_limit(mod)`
+	- Modify the number of `Voucher`/`Booster` objects that appear in the shop
+	- `mod` - number to change limit by *(if this limit is increased whilst in a shop, a new object will be created automatically)*
+- `SMODS.change_free_rerolls(mod)`
+	- Modify the number of free rerolls per shop
+	- `mod` - number to change the amount by *(applies instantly if within a shop)*
+- `SMODS.change_play_limit(mod)`/`SMODS.change_discard_limit(mod)`
+	- Used to change the number of cards that can be played/discarded at one time. Play limit has a lower limit of **1**, and discard has a lower limit of **0**. *(Note: values can go below these limits, but will have no effect)*
+	- `mod` - number to change the limit by
+- `SMODS.draw_cards(hand_space)`
+	- Function to draw a certain number of cards to hand, calling the relevant calculation contexts
+	- `hand_space` - the number of cards to draw
+- `SMODS.merge_effects(...) -> table`
+    - Takes any number of 2D arrays. Flattens given calculation returns into one, utilising `extra` tables.
+    - This can be used to merge returns from `SMODS.blueprint_effect`.
 ## Internal utilities
 These functions are used internally and may be of use to you if you're modifying Steamodded's injection process.
 - `SMODS.save_d_u(o)`

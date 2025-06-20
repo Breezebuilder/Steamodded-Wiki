@@ -86,6 +86,13 @@ calculate = function(self, card, context)
 > If you want to evaluate effects outside of the return table, use `SMODS.calculate_effect({effects}, card)`,
 > where `{effects}` is a table like the return table of a calculate function, and `card` is the card that is being evaluated.
 
+> [!WARNING]
+> If you use `context.xxx` inside `SMODS.calculate_effect` or an Event,
+> you might need to save `context.xxx` in a local variable.
+>
+> (`context` is NOT constant. It could change later and cause you
+> to reference an unrelated value.)
+
 ## Contexts
 Detailed here is a list of all contexts that are sent to calculate functions, as well as a unique identifier to use to reference them. As each context is sent to different areas, use the following logic statement to make sure you are calculating in the intended area.
 ```lua
@@ -213,22 +220,26 @@ if context.final_scoring_step and context.cardarea == G.play then
 }
 ```
 ---
-This context is used for marking cards to be destroyed. 
+This context is used for marking cards to be destroyed.
 ```lua
-if context.destroy_card and context.cardarea == G.play then
+if context.destroy_card then
 {
-	cardarea = G.play, -- G.hand, (G.deck and G.discard optionally enabled)
+	cardarea = G.play -- 'unscored', G.hand, (G.deck and G.discard optionally enabled)
 	full_hand = G.play.cards,
 	scoring_hand = scoring_hand,
 	scoring_name = text,
 	poker_hands = poker_hands,
 	destroy_card = card,
-	destroying_card = card -- only when calculating in G.play
+	destroying_card = card -- only when calculating in G.play.
+	-- This is from vanilla, you can use context.destroy_card instead.
 }
 ```
 > [!TIP]
 > Your return table to destroy a card without a message should look like
 > `return { remove = true }`
+
+> [!TIP]
+> If you want a card to destroy itself, you need `...and context.destroy_card == card` to avoid destroying other cards.
 ---
 This context is used for effects on removing cards. 
 ```lua
@@ -443,7 +454,7 @@ if context.playing_card_added then
 {
 	cardarea = G.jokers, -- G.hand, (G.deck and G.discard optionally enabled)
 	playing_card_added = true,
-	cards = cards -- the cards being added (sometimes is true when used from vanilla items)
+	cards = cards -- the cards being added
 }
 ```
 ---
